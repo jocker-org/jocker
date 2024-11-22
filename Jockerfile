@@ -1,0 +1,4 @@
+{
+  image: "alpine:latest",
+  copy: "README.md",
+}
