@@ -4,6 +4,7 @@
 *.so
 *.dylib
 main
+jocker
 
 # Test binary, built with `go test -c`
 *.test

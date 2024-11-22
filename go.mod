@@ -1,6 +1,6 @@
-module elty.it/jocker
+module github.com/heph2/jocker
 
-go 1.22.6
+go 1.22.1
 
 require (
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230811130428-ced1acdcaa24 // indirect
