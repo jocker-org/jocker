@@ -1,4 +1,13 @@
 {
-  image: "alpine:latest",
-  copy: "README.md",
+    image: "alpine:latest",
+    workdir: "/app",
+    copy: [
+	"/README.md:/README.md",
+    ],
+    run: [
+	"pip install mkdocs",
+    ],
+    cmd: [
+	"mkdocs serve --dev-addr=0.0.0.0:8000",
+    ],
 }
