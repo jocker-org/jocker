@@ -2,7 +2,7 @@
 
 {
   # https://devenv.sh/basics/
-  env.GREET = "devenv";
+  env.BUILDKIT_HOST = "docker-container://buildkit";
 
   # https://devenv.sh/packages/
   packages = with pkgs; [ git gopls go ];
@@ -17,8 +17,8 @@
   # services.postgres.enable = true;
 
   # https://devenv.sh/scripts/
-  scripts.hello.exec = ''
-    echo hello from $GREET
+  scripts.run-debug.exec = ''
+    go run main.go debug-dump | buildctl debug dump-llb | jq
   '';
 
   enterShell = ''
