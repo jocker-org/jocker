@@ -19,9 +19,9 @@
             "from": "alpine:latest",
             "steps": [
                 {"type": "RUN", "command": "apk update"},
-                {"type": "RUN", "command": "apk add cowsay"},
-                // {"type": "COPY", "src": "./docs", "dst": "/src"},		
-                {"type": "CMD", "command": "echo hello | cowsay"}
+                {"type": "RUN", "command": "apk add fortune"},
+                //{"type": "COPY", "src": "./docs", "dst": "/src"},		
+                //{"type": "CMD", "command": "fortune"}
             ]
         },
         // {
