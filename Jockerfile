@@ -1,36 +1,38 @@
-{
-    image: "alpine:latest",
-    workdir: "/app",
-    copy: [
-	"/README.md:/README.md",
-    ],
-    run: [
-	"apk add mkdocs",
-    ],
-    cmd: [
-	"mkdocs serve --dev-addr=0.0.0.0:8000",
-    ],
-}
-
 // {
-//     "stages": [
-//         {
-//             "name": "build_stage_1",
-//             "from": "node:14",
-//             "steps": [
-//                 {"type": "RUN", "command": ["apt-get update"]},
-//                 {"type": "RUN", "command": ["npm install"]},
-//                 {"type": "RUN", "command": ["npm run build"]}
-//             ]
-//         },
-//         {
-//             "name": "build_stage_2",
-//             "from": "alpine:3.12",
-//             "steps": [
-//                 {"type": "COPY", "src": "build_stage_1:/app", "dst": "/app"},
-//                 {"type": "COPY", "src": "./src", "dst": "/src"},
-//                 {"type": "RUN", "command": ["npm run test"]}
-//             ]
-//         }
-//     ]
+//     image: "alpine:latest",
+//     workdir: "/app",
+//     copy: [
+// 	"/README.md:/README.md",
+//     ],
+//     run: [
+// 	"apk add mkdocs",
+//     ],
+//     cmd: [
+// 	"mkdocs serve --dev-addr=0.0.0.0:8000",
+//     ],
 // }
+
+{
+    "stages": [
+        {
+            "name": "build_stage_1",
+            "from": "alpine:latest",
+            "steps": [
+                {"type": "RUN", "command": "apk update"},
+                {"type": "RUN", "command": "apk add cowsay"},
+                // {"type": "COPY", "src": "./docs", "dst": "/src"},		
+                {"type": "CMD", "command": "echo hello | cowsay"}
+            ]
+        },
+        // {
+        //     "name": "build_stage_2",
+        //     "from": "alpine:3.12",
+        //     "steps": [
+        //         {"type": "COPY", "src": "build_stage_1:/app", "dst": "/app"},
+        //         {"type": "COPY", "src": "./src", "dst": "/src"},
+        //         {"type": "RUN", "command": "npm run test"},
+	// 	{"type": "CMD", "command": ""}
+        //     ]
+        // }
+    ]
+}
