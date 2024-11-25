@@ -2,13 +2,15 @@ package jocker
 
 import (
 	// "context"
-	"fmt"
+	"context"
 	"log"
+	"os"
+
 	// "os"
 
 	// "github.com/heph2/jocker/internal/builder"
 	"github.com/heph2/jocker/internal/parser"
-
+	"github.com/moby/buildkit/client/llb"
 	// "github.com/moby/buildkit/client/llb"
 )
 
@@ -25,15 +27,12 @@ func DebugDump() error {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("%#v\n", j)
-
 	// Generate LLB state from Jockerfile
-	// dt, err := builder.JockerfileToLLB(j).Marshal(context.TODO(), llb.LinuxAmd64)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	dt, err := j.ToLLB().Marshal(context.TODO(), llb.LinuxAmd64)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// // Write LLB definition to stdout
-	// return llb.WriteTo(dt, os.Stdout)
-	return nil
+	// Write LLB definition to stdout
+	return llb.WriteTo(dt, os.Stdout)
 }

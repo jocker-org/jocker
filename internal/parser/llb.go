@@ -21,6 +21,30 @@ func shf(cmd string, v ...interface{}) llb.RunOption {
 	return llb.Args([]string{"/bin/sh", "-c", fmt.Sprintf(cmd, v...)})
 }
 
+func (stage *BuildStage) ToLLB() llb.State {
+	var state llb.State
+
+	if stage.From == "scratch" {
+		state = llb.Scratch()
+	} else {
+		state = llb.Image(stage.From)
+	}
+
+	for i := range *stage.Steps {
+		state = (*stage.Steps)[i].ExecStep(state)
+	}
+
+	return state
+}
+
+func (j *Jockerfile) ToLLB() llb.State {
+	for _, stage := range j.Stages {
+		return stage.ToLLB()
+	}
+
+	panic("no steps")
+}
+
 // func JockerfileToLLB(j *parser.Jockerfile) llb.State {
 // 	s := llb.Image(j.Image)
 // 	// Not needed to pass the entire config,
