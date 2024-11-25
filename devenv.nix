@@ -5,7 +5,7 @@
   env.BUILDKIT_HOST = "docker-container://buildkit";
 
   # https://devenv.sh/packages/
-  packages = with pkgs; [ git gopls go ];
+  packages = with pkgs; [ git gopls go buildkit jq ];
 
   # https://devenv.sh/languages/
   languages.go.enable = true;
