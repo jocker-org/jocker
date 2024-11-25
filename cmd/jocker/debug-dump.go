@@ -1,16 +1,16 @@
 package jocker
 
 import (
-	"context"
+	// "context"
+	"fmt"
 	"log"
-	"os"
+	// "os"
 
+	// "github.com/heph2/jocker/internal/builder"
 	"github.com/heph2/jocker/internal/parser"
-	"github.com/heph2/jocker/internal/builder"
 
-	"github.com/moby/buildkit/client/llb"
+	// "github.com/moby/buildkit/client/llb"
 )
-
 
 func DebugDump() error {
 	// Initialize Jsonnet VM and evaluate Jockerfile
@@ -25,12 +25,15 @@ func DebugDump() error {
 		log.Fatal(err)
 	}
 
-	// Generate LLB state from Jockerfile
-	dt, err := builder.JockerfileToLLB(j).Marshal(context.TODO(), llb.LinuxAmd64)
-	if err != nil {
-		log.Fatal(err)
-	}
+	fmt.Printf("%#v\n", j)
 
-	// Write LLB definition to stdout
-	return llb.WriteTo(dt, os.Stdout)	
+	// Generate LLB state from Jockerfile
+	// dt, err := builder.JockerfileToLLB(j).Marshal(context.TODO(), llb.LinuxAmd64)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// // Write LLB definition to stdout
+	// return llb.WriteTo(dt, os.Stdout)
+	return nil
 }
