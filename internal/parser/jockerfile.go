@@ -2,17 +2,67 @@ package parser
 
 import (
 	"encoding/json"
+
+	"github.com/moby/buildkit/client/llb"
 )
 
+type BuildStep interface {
+	ExecStep(llb.State) llb.State
+}
+
+type CopyStep struct {
+	Source      string `json:"source"`
+	Destination string `json:"destination"`
+}
+
+type RunStep struct {
+	Command string `json:"command"`
+}
+
+type BuildStage struct {
+	Name string `json:"name"`
+	From string `json:"from"`
+	Steps *BuildSteps
+}
+
 type Jockerfile struct {
-	Image      string   `json:"image"`      // Base image
-	Copy       []string `json:"copy"`       // Copy source:destination pairs
-	Run        []string `json:"run"`        // Commands to execute during image build
-	Cmd        []string `json:"cmd"`        // Command to run when container starts
-	WorkDir    string   `json:"workdir"`    // Working directory inside the container
-	Expose     []int    `json:"expose"`     // Ports to expose
-	EntryPoint []string `json:"entrypoint"` // Entrypoint command
-	Env        map[string]string `json:"env"` // Environment variables
+	Stages []BuildStage `json:"stages"`
+}
+
+type BuildSteps []BuildStep
+
+func (steps *BuildSteps) UnmarshalJSON(data []byte) error {
+	var raw []json.RawMessage
+	err := json.Unmarshal(data, &raw)
+	if err != nil {
+		return err
+	}
+	for _, r := range raw {
+		var obj map[string]interface{}
+		err := json.Unmarshal(r, &obj)
+		if err != nil {
+			return err
+		}
+		
+		stepType := ""
+		if t, ok := obj["type"].(string); ok {
+			stepType = t
+		}
+
+		var actual BuildStep
+		switch stepType {
+		case "COPY":
+			actual = &CopyStep{}
+		case "RUN":
+			actual = &RunStep{}
+		}
+		err = json.Unmarshal(r, actual)
+		if err != nil {
+			return err
+		}
+		*steps = append(*steps, actual)		
+	}
+	return nil
 }
 
 func ParseJockerfile(jsonStr string) (*Jockerfile, error) {
