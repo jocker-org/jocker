@@ -38,11 +38,13 @@ func (stage *BuildStage) ToLLB() llb.State {
 }
 
 func (j *Jockerfile) ToLLB() llb.State {
+	var state llb.State
+
 	for _, stage := range j.Stages {
-		return stage.ToLLB()
+		state = stage.ToLLB()
 	}
 
-	panic("no steps")
+	return state
 }
 
 // func JockerfileToLLB(j *parser.Jockerfile) llb.State {
