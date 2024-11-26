@@ -1,4 +1,4 @@
-#syntax=ghcr.io/heph2/jocker
+#syntax=ghcr.io/jocker-org/jocker
 {
     "stages": [
         {
