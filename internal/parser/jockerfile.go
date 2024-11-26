@@ -14,6 +14,10 @@ type RunStep struct {
 	Command string `json:"command"`
 }
 
+type WorkdirStep struct {
+	Path string `json:"path"`
+}
+
 type BuildStage struct {
 	Name string `json:"name"`
 	From string `json:"from"`
@@ -38,7 +42,7 @@ func (steps *BuildSteps) UnmarshalJSON(data []byte) error {
 		if err != nil {
 			return err
 		}
-		
+
 		stepType := ""
 		if t, ok := obj["type"].(string); ok {
 			stepType = t
@@ -50,12 +54,14 @@ func (steps *BuildSteps) UnmarshalJSON(data []byte) error {
 			actual = &CopyStep{}
 		case "RUN":
 			actual = &RunStep{}
+		case "WORKDIR":
+			actual = &WorkdirStep{}
 		}
 		err = json.Unmarshal(r, actual)
 		if err != nil {
 			return err
 		}
-		*steps = append(*steps, actual)		
+		*steps = append(*steps, actual)
 	}
 	return nil
 }

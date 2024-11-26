@@ -30,6 +30,11 @@ func (c *RunStep) ExecStep(b *BuildContext) llb.State {
 	return b.state
 }
 
+func (c *WorkdirStep) ExecStep(b *BuildContext) llb.State {
+	b.state = b.state.Dir(c.Path)
+	return b.state
+}
+
 func shf(cmd string, v ...interface{}) llb.RunOption {
 	return llb.Args([]string{"/bin/sh", "-c", fmt.Sprintf(cmd, v...)})
 }

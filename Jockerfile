@@ -4,6 +4,7 @@
             "name": "builder",
             "from": "alpine:latest",
             "steps": [
+		{"type": "WORKDIR", "path": "/src"},
                 {"type": "RUN", "command": "apk update"},
                 {"type": "RUN", "command": "apk upgrade"},
                 {"type": "RUN", "command": "apk add mkdocs"},
