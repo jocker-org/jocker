@@ -2,61 +2,64 @@ package parser
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/moby/buildkit/client/llb"
 )
 
-func (c *CopyStep) ExecStep(state llb.State) llb.State {
-	st := llb.Local("context")
-	state = state.File(llb.Copy(st, c.Source, c.Destination))
-	return state
+type BuildContext struct {
+	stages map[string]llb.State
+	state  llb.State
 }
 
-func (c *RunStep) ExecStep(state llb.State) llb.State {
-	state = state.Run(shf(c.Command)).Root()
-	return state
+type BuildStep interface {
+	ExecStep(*BuildContext) llb.State
+}
+
+func (c *CopyStep) ExecStep(b *BuildContext) llb.State {
+	st := llb.Local("context")
+	if c.From != "" {
+		st = b.stages[c.From]
+	}
+	b.state = b.state.File(llb.Copy(st, c.Source, c.Destination))
+	return b.state
+}
+
+func (c *RunStep) ExecStep(b *BuildContext) llb.State {
+	b.state = b.state.Run(shf(c.Command)).Root()
+	return b.state
 }
 
 func shf(cmd string, v ...interface{}) llb.RunOption {
 	return llb.Args([]string{"/bin/sh", "-c", fmt.Sprintf(cmd, v...)})
 }
 
-func (stage *BuildStage) ToLLB() llb.State {
-	var state llb.State
-
+func (stage *BuildStage) ToLLB(b *BuildContext) llb.State {
 	if stage.From == "scratch" {
-		state = llb.Scratch()
+		b.state = llb.Scratch()
 	} else {
-		state = llb.Image(stage.From)
+		b.state = llb.Image(stage.From)
 	}
 
 	for i := range *stage.Steps {
-		state = (*stage.Steps)[i].ExecStep(state)
+		log.Printf("building stage %#v\n", (*stage.Steps)[i])
+		b.state = (*stage.Steps)[i].ExecStep(b)
 	}
 
-	return state
+	return b.state
 }
 
 func (j *Jockerfile) ToLLB() llb.State {
+	b := BuildContext{
+		stages: make(map[string]llb.State),
+	}
 	var state llb.State
 
 	for _, stage := range j.Stages {
-		state = stage.ToLLB()
+		log.Println("building stage", stage.Name)
+		state = stage.ToLLB(&b)
+		b.stages[stage.Name] = state
 	}
 
 	return state
 }
-
-// func JockerfileToLLB(j *parser.Jockerfile) llb.State {
-// 	s := llb.Image(j.Image)
-// 	// Not needed to pass the entire config,
-// 	// just the Copy is enough
-// 	if j.Copy != nil {
-// 		s = JockerfileCopy(s, j)
-// 	}
-
-// 	if j.Run != nil {
-// 		s = JockerfileRun(s, j)
-// 	}
-// 	return s
-// }

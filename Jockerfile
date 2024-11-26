@@ -1,38 +1,27 @@
-// {
-//     image: "alpine:latest",
-//     workdir: "/app",
-//     copy: [
-// 	"/README.md:/README.md",
-//     ],
-//     run: [
-// 	"apk add mkdocs",
-//     ],
-//     cmd: [
-// 	"mkdocs serve --dev-addr=0.0.0.0:8000",
-//     ],
-// }
-
 {
     "stages": [
         {
-            "name": "build_stage_1",
+            "name": "builder",
             "from": "alpine:latest",
             "steps": [
                 {"type": "RUN", "command": "apk update"},
-                {"type": "RUN", "command": "apk add fortune"},
-                //{"type": "COPY", "src": "./docs", "dst": "/src"},		
-                //{"type": "CMD", "command": "fortune"}
+                {"type": "RUN", "command": "apk upgrade"},
+                {"type": "RUN", "command": "apk add mkdocs"},
+                {"type": "COPY", "src": "mkdocs.yml", "dst": "/src"},
+                {"type": "COPY", "src": "./docs", "dst": "/src/docs"},
+                {"type": "RUN", "command": "mkdocs build"}
             ]
         },
-        // {
-        //     "name": "build_stage_2",
-        //     "from": "alpine:3.12",
-        //     "steps": [
-        //         {"type": "COPY", "src": "build_stage_1:/app", "dst": "/app"},
-        //         {"type": "COPY", "src": "./src", "dst": "/src"},
-        //         {"type": "RUN", "command": "npm run test"},
-	// 	{"type": "CMD", "command": ""}
-        //     ]
-        // }
+        {
+            "name": "server",
+            "from": "alpine:latest",
+            "steps": [
+                {"type": "RUN", "command": "apk update"},
+                {"type": "RUN", "command": "apk upgrade"},
+                {"type": "RUN", "command": "apk add python3"},
+                {"type": "COPY", "from": "builder", "src": "/src/docs", "dst": "/src"},
+                //{"type": "CMD", "command": "python3 -m http.serve"}
+            ]
+        },
     ]
 }

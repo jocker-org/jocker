@@ -2,17 +2,12 @@ package parser
 
 import (
 	"encoding/json"
-
-	"github.com/moby/buildkit/client/llb"
 )
 
-type BuildStep interface {
-	ExecStep(llb.State) llb.State
-}
-
 type CopyStep struct {
-	Source      string `json:"source"`
-	Destination string `json:"destination"`
+	From        string `json:"from,omitempty"`
+	Source      string `json:"src"`
+	Destination string `json:"dst"`
 }
 
 type RunStep struct {
