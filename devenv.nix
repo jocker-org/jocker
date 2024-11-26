@@ -25,6 +25,10 @@
     go run main.go debug-dump | buildctl build --local context=. --output type=image,name=docker.io/jocker/test,push=false
   '';
 
+  scripts.run-publish.exec = ''
+    go run main.go debug-dump | buildctl build --local context=. --output type=image,name=ghcr.io/heph2/jocker-test:latest,push=true
+  '';
+
   enterShell = ''
     hello
     git --version
