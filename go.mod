@@ -1,6 +1,12 @@
-module github.com/heph2/jocker
+module github.com/jocker-org/jocker
 
 go 1.22.1
+
+require (
+	github.com/google/go-jsonnet v0.20.0
+	github.com/heph2/jocker v0.0.0-20241125185739-db8fa55b9ec8
+	github.com/moby/buildkit v0.17.2
+)
 
 require (
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230811130428-ced1acdcaa24 // indirect
@@ -18,13 +24,11 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
-	github.com/google/go-jsonnet v0.20.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/in-toto/in-toto-golang v0.5.0 // indirect
 	github.com/klauspost/compress v1.17.11 // indirect
-	github.com/moby/buildkit v0.17.2 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/locker v1.0.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect

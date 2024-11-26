@@ -2,7 +2,7 @@ package main
 
 import (
 	"log"
-	cmd "github.com/heph2/jocker/cmd/jocker"
+	cmd "github.com/jocker-org/jocker/cmd/jocker"
 )
 
 func main() {

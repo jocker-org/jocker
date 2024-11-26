@@ -1,15 +1,11 @@
 package jocker
 
 import (
-	// "context"
 	"context"
 	"log"
 	"os"
 
-	// "os"
-
-	// "github.com/heph2/jocker/internal/builder"
-	"github.com/heph2/jocker/internal/parser"
+	"github.com/jocker-org/jocker/internal/parser"
 	"github.com/moby/buildkit/client/llb"
 	// "github.com/moby/buildkit/client/llb"
 )
