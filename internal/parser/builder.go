@@ -93,7 +93,7 @@ func Build(ctx context.Context, c client.Client) (*client.Result, error) {
 	img := &specs.Image{
 		Platform: p,
 		Config: specs.ImageConfig{
-			Cmd: []string {"/bin/ls"},
+			Cmd: j.Cmd(),
 		},
 	}
 

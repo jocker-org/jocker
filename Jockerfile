@@ -21,9 +21,9 @@
                 {"type": "RUN", "command": "apk update"},
                 {"type": "RUN", "command": "apk upgrade"},
                 {"type": "RUN", "command": "apk add python3"},
-                {"type": "COPY", "from": "builder", "src": "/src/docs", "dst": "/src"},
-                //{"type": "CMD", "command": "python3 -m http.serve"}
-            ]
+                {"type": "COPY", "from": "builder", "src": "/src/site", "dst": "/www"},
+            ],
+	    "cmd": ["python3", "-m", "http.server", "-d", "/www"],
         },
     ]
 }
