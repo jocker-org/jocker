@@ -101,9 +101,7 @@ func Build(ctx context.Context, c client.Client) (*client.Result, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal image config: %w", err)
 	}
-	k := platforms.Format(p)
-
-	res.AddMeta(fmt.Sprintf("%s/%s", exptypes.ExporterImageConfigKey, k), config)
+	res.AddMeta(exptypes.ExporterImageConfigKey, config)
 	res.SetRef(ref)
 
 	return res, nil
