@@ -17,6 +17,8 @@ func Execute() error {
 	switch command {
 	case "debug-dump":
 		return DebugDump()
+	case "build":
+		return Build()
 	case "help":
 		return help()
 	default:
