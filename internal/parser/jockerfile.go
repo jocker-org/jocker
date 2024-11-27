@@ -22,22 +22,14 @@ type BuildStage struct {
 	Name string `json:"name"`
 	From string `json:"from"`
 	Steps *BuildSteps
-	Cmd []string `json:"cmd"`
 }
 
 type Jockerfile struct {
 	Stages []BuildStage `json:"stages"`
+	Cmd []string `json:"cmd"`
 }
 
 type BuildSteps []BuildStep
-
-func (j *Jockerfile) Cmd() []string {
-	if len(j.Stages) == 0 {
-		return []string{}
-	}
-
-	return j.Stages[len(j.Stages)-1].Cmd
-}
 
 func (steps *BuildSteps) UnmarshalJSON(data []byte) error {
 	var raw []json.RawMessage
