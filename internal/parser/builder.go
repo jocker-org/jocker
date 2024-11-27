@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/containerd/platforms"
 	"github.com/google/go-jsonnet"
@@ -56,24 +55,24 @@ func Build(ctx context.Context, c client.Client) (*client.Result, error) {
 
 	jockerfile, err := ReadFile(ctx, c, filename)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	vm := jsonnet.MakeVM()
 	jsonStr, err := vm.EvaluateAnonymousSnippet(filename, jockerfile)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	j, err := ParseJockerfile(jsonStr)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	state := j.ToLLB()
 	dt, err := state.Marshal(ctx, llb.LinuxAmd64)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	res, err := c.Solve(ctx, client.SolveRequest{
