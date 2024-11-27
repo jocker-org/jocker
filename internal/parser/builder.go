@@ -60,7 +60,7 @@ func Build(ctx context.Context, c client.Client) (*client.Result, error) {
 	}
 
 	vm := jsonnet.MakeVM()
-	jsonStr, err := vm.EvaluateAnonymousSnippet("jockerfile", jockerfile)
+	jsonStr, err := vm.EvaluateAnonymousSnippet(filename, jockerfile)
 	if err != nil {
 		log.Fatal(err)
 	}
