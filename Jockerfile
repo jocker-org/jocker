@@ -20,10 +20,14 @@
             "steps": [
                 {"type": "RUN", "command": "apk update"},
                 {"type": "RUN", "command": "apk upgrade"},
-                {"type": "RUN", "command": "apk add python3"},
+                {"type": "RUN", "command": "apk add darkhttpd"},
                 {"type": "COPY", "from": "builder", "src": "/src/site", "dst": "/www"},
             ],
-	    "cmd": ["python3", "-m", "http.server", "-d", "/www"],
         },
-    ]
+    ],
+    "cmd": ["darkhttpd", "/www"],
 }
+
+// Local Variables:
+// mode: jsonnet
+// End:
