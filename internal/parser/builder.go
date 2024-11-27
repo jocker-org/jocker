@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 
 	"github.com/containerd/platforms"
 	"github.com/google/go-jsonnet"
@@ -13,7 +14,7 @@ import (
 	specs "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
-func ReadFile(ctx context.Context, c client.Client, filename string) (string, error) {
+func readFile(ctx context.Context, c client.Client, filename string) (content []byte, err error) {
 	src := llb.Local("context",
 		llb.IncludePatterns([]string{filename}),
 		llb.SessionID(c.BuildOpts().SessionID),
@@ -22,28 +23,61 @@ func ReadFile(ctx context.Context, c client.Client, filename string) (string, er
 
 	def, err := src.Marshal(ctx)
 	if err != nil {
-		return "", fmt.Errorf("failed to marshal local source: %w", err)
+		return
 	}
 
 	res, err := c.Solve(ctx, client.SolveRequest{
 		Definition: def.ToPB(),
 	})
 	if err != nil {
-		return "", err
+		return
 	}
 
 	ref, err := res.SingleRef()
 	if err != nil {
-		return "", err
+		return
 	}
 
-	content, err := ref.ReadFile(ctx, client.ReadRequest{
+	return ref.ReadFile(ctx, client.ReadRequest{
 		Filename: filename,
 	})
-	if err != nil {
-		return "", err
+}
+
+type ContexImporter struct {
+	ctx context.Context
+	cache map[string]jsonnet.Contents
+	c client.Client
+}
+
+func NewContextImporter(ctx context.Context, c client.Client) *ContexImporter {
+	return &ContexImporter{
+		ctx: ctx,
+		cache: make(map[string]jsonnet.Contents),
+		c: c,
 	}
-	return string(content), nil
+}
+
+func (importer *ContexImporter) Import(importedFrom, importedPath string) (contents jsonnet.Contents, foundHere string, err error) {
+	dir, _ := filepath.Split(importedFrom)
+
+	absPath := importedPath
+	if !filepath.IsAbs(importedPath) {
+		absPath = filepath.Join(dir, importedPath)
+	}
+
+	if entry, ok := importer.cache[absPath]; ok {
+		return entry, absPath, nil
+	}
+
+	content, err := readFile(importer.ctx, importer.c, absPath)
+	if err != nil {
+		// TODO: distinguish between file not found and other
+		// failures?
+		return
+	}
+	entry := jsonnet.MakeContentsRaw(content)
+	importer.cache[absPath] = entry
+	return entry, absPath, nil
 }
 
 func Build(ctx context.Context, c client.Client) (*client.Result, error) {
@@ -53,13 +87,15 @@ func Build(ctx context.Context, c client.Client) (*client.Result, error) {
 		filename = "Jockerfile"
 	}
 
-	jockerfile, err := ReadFile(ctx, c, filename)
+	importer := NewContextImporter(ctx, c)
+	content, _, err := importer.Import("", filename)
 	if err != nil {
 		return nil, err
 	}
 
 	vm := jsonnet.MakeVM()
-	jsonStr, err := vm.EvaluateAnonymousSnippet(filename, jockerfile)
+	vm.Importer(importer)
+	jsonStr, err := vm.EvaluateAnonymousSnippet(filename, content.String())
 	if err != nil {
 		return nil, err
 	}
