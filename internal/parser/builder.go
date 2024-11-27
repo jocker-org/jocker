@@ -14,13 +14,7 @@ import (
 	specs "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
-func GetJockerfile(ctx context.Context, c client.Client) (string, error) {
-	opts := c.BuildOpts().Opts
-	filename := opts["filename"]
-	if filename == "" {
-		filename = "Jockerfile"
-	}
-
+func ReadFile(ctx context.Context, c client.Client, filename string) (string, error) {
 	src := llb.Local("context",
 		llb.IncludePatterns([]string{filename}),
 		llb.SessionID(c.BuildOpts().SessionID),
@@ -44,17 +38,23 @@ func GetJockerfile(ctx context.Context, c client.Client) (string, error) {
 		return "", err
 	}
 
-	jockerfile, err := ref.ReadFile(ctx, client.ReadRequest{
+	content, err := ref.ReadFile(ctx, client.ReadRequest{
 		Filename: filename,
 	})
 	if err != nil {
 		return "", err
 	}
-	return string(jockerfile), nil
+	return string(content), nil
 }
 
 func Build(ctx context.Context, c client.Client) (*client.Result, error) {
-	jockerfile, err := GetJockerfile(ctx, c)
+	opts := c.BuildOpts().Opts
+	filename := opts["filename"]
+	if filename == "" {
+		filename = "Jockerfile"
+	}
+
+	jockerfile, err := ReadFile(ctx, c, filename)
 	if err != nil {
 		log.Fatal(err)
 	}
