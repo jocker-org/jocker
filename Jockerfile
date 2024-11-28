@@ -26,6 +26,7 @@
         },
     ],
     "cmd": ["darkhttpd", "/www"],
+    "excludes" : ["*", "!docs", "!mkdocs.yml"],
 }
 
 // Local Variables:

@@ -10,6 +10,7 @@ import (
 type BuildContext struct {
 	stages map[string]llb.State
 	state  llb.State
+	context llb.State
 }
 
 type BuildStep interface {
@@ -17,7 +18,7 @@ type BuildStep interface {
 }
 
 func (c *CopyStep) ExecStep(b *BuildContext) llb.State {
-	st := llb.Local("context")
+	st := b.context
 	if c.From != "" {
 		st = b.stages[c.From]
 	}
@@ -59,6 +60,11 @@ func (j *Jockerfile) ToLLB() llb.State {
 		stages: make(map[string]llb.State),
 	}
 	var state llb.State
+	opts := []llb.LocalOption{
+		llb.ExcludePatterns(j.Excludes),
+	}
+
+	b.context = llb.Local("context", opts...)
 
 	for _, stage := range j.Stages {
 		log.Println("building stage", stage.Name)

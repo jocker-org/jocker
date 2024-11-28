@@ -27,6 +27,7 @@ type BuildStage struct {
 type Jockerfile struct {
 	Stages []BuildStage `json:"stages"`
 	Cmd []string `json:"cmd"`
+	Excludes []string `json:"excludes,omitempty"`
 }
 
 type BuildSteps []BuildStep
