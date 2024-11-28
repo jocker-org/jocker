@@ -5,7 +5,7 @@ on:
   push:
     branches:
       - master
-env:
+ienv:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
@@ -36,4 +36,4 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: latest
+          tags: ghcr.io/jocker-org/jocker:latest
