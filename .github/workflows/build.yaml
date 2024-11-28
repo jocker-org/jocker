@@ -11,6 +11,7 @@ env:
 
 jobs:
   push_to_registry:
+    permissions: write-all
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
     permissions:
