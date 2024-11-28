@@ -14,6 +14,6 @@
   '';
 
   scripts.run-publish.exec = ''
-    docker build -t ghcr.io/jocker-org/jocker:latest -f Dockerfile . && docker push ghcr.io/jocker-org/jocker:latest
+    docker build -t ghcr.io/jocker-org/jocker:latest -f Dockerfile --platform linux/amd64 . && docker push ghcr.io/jocker-org/jocker:latest
   '';
 }
