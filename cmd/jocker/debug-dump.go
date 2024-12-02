@@ -23,7 +23,11 @@ func DebugDump() error {
 	}
 
 	// Generate LLB state from Jockerfile
-	state := j.ToLLB()
+	state, err := j.ToLLB()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	ctx := context.TODO()
 	dt, err := state.Marshal(ctx, llb.LinuxAmd64)
 	if err != nil {

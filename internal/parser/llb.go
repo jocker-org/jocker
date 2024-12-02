@@ -14,33 +14,33 @@ type BuildContext struct {
 }
 
 type BuildStep interface {
-	ExecStep(*BuildContext) llb.State
+	Evaluate(*BuildContext) error
 }
 
-func (c *CopyStep) ExecStep(b *BuildContext) llb.State {
+func (c *CopyStep) Evaluate(b *BuildContext) error {
 	st := b.context
 	if c.From != "" {
 		st = b.stages[c.From]
 	}
 	b.state = b.state.File(llb.Copy(st, c.Source, c.Destination))
-	return b.state
+	return nil
 }
 
-func (c *RunStep) ExecStep(b *BuildContext) llb.State {
+func (c *RunStep) Evaluate(b *BuildContext) error {
 	b.state = b.state.Run(shf(c.Command)).Root()
-	return b.state
+	return nil
 }
 
-func (c *WorkdirStep) ExecStep(b *BuildContext) llb.State {
+func (c *WorkdirStep) Evaluate(b *BuildContext) error {
 	b.state = b.state.Dir(c.Path)
-	return b.state
+	return nil
 }
 
 func shf(cmd string, v ...interface{}) llb.RunOption {
 	return llb.Args([]string{"/bin/sh", "-c", fmt.Sprintf(cmd, v...)})
 }
 
-func (stage *BuildStage) ToLLB(b *BuildContext) llb.State {
+func (stage *BuildStage) ToLLB(b *BuildContext) (llb.State, error) {
 	if stage.From == "scratch" {
 		b.state = llb.Scratch()
 	} else {
@@ -49,13 +49,15 @@ func (stage *BuildStage) ToLLB(b *BuildContext) llb.State {
 
 	for i := range *stage.Steps {
 		log.Printf("building stage %#v\n", (*stage.Steps)[i])
-		b.state = (*stage.Steps)[i].ExecStep(b)
+		if err := (*stage.Steps)[i].Evaluate(b); err != nil {
+			return b.state, err
+		}
 	}
 
-	return b.state
+	return b.state, nil
 }
 
-func (j *Jockerfile) ToLLB() llb.State {
+func (j *Jockerfile) ToLLB() (llb.State, error) {
 	b := BuildContext{
 		stages: make(map[string]llb.State),
 	}
@@ -68,9 +70,12 @@ func (j *Jockerfile) ToLLB() llb.State {
 
 	for _, stage := range j.Stages {
 		log.Println("building stage", stage.Name)
-		state = stage.ToLLB(&b)
+		state, err := stage.ToLLB(&b)
+		if err != nil {
+			return state, err
+		}
 		b.stages[stage.Name] = state
 	}
 
-	return state
+	return state, nil
 }
