@@ -44,16 +44,16 @@ func readFile(ctx context.Context, c client.Client, filename string) (content []
 }
 
 type ContexImporter struct {
-	ctx context.Context
+	ctx   context.Context
 	cache map[string]jsonnet.Contents
-	c client.Client
+	c     client.Client
 }
 
 func NewContextImporter(ctx context.Context, c client.Client) *ContexImporter {
 	return &ContexImporter{
-		ctx: ctx,
+		ctx:   ctx,
 		cache: make(map[string]jsonnet.Contents),
-		c: c,
+		c:     c,
 	}
 }
 

@@ -8,8 +8,8 @@ import (
 )
 
 type BuildContext struct {
-	stages map[string]llb.State
-	state  llb.State
+	stages  map[string]llb.State
+	state   llb.State
 	context llb.State
 }
 

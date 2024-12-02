@@ -19,15 +19,15 @@ type WorkdirStep struct {
 }
 
 type BuildStage struct {
-	Name string `json:"name"`
-	From string `json:"from"`
+	Name  string `json:"name"`
+	From  string `json:"from"`
 	Steps *BuildSteps
 }
 
 type Jockerfile struct {
-	Stages []BuildStage `json:"stages"`
-	Cmd []string `json:"cmd"`
-	Excludes []string `json:"excludes,omitempty"`
+	Stages   []BuildStage `json:"stages"`
+	Cmd      []string     `json:"cmd"`
+	Excludes []string     `json:"excludes,omitempty"`
 }
 
 type BuildSteps []BuildStep
