@@ -1,32 +1,32 @@
 #syntax=ghcr.io/jocker-org/jocker
 {
-    "stages": [
-        {
-            "name": "builder",
-            "from": "alpine:latest",
-            "steps": [
-		{"type": "WORKDIR", "path": "/src"},
-                {"type": "RUN", "command": "apk update"},
-                {"type": "RUN", "command": "apk upgrade"},
-                {"type": "RUN", "command": "apk add mkdocs"},
-                {"type": "COPY", "src": "mkdocs.yml", "dst": "/src"},
-                {"type": "COPY", "src": "./docs", "dst": "/src/docs"},
-                {"type": "RUN", "command": "mkdocs build"}
-            ]
-        },
-        {
-            "name": "server",
-            "from": "alpine:latest",
-            "steps": [
-                {"type": "RUN", "command": "apk update"},
-                {"type": "RUN", "command": "apk upgrade"},
-                {"type": "RUN", "command": "apk add darkhttpd"},
-                {"type": "COPY", "from": "builder", "src": "/src/site", "dst": "/www"},
-            ],
-        },
-    ],
-    "cmd": ["darkhttpd", "/www"],
-    "excludes" : ["*", "!docs", "!mkdocs.yml"],
+  "stages": [
+    {
+      "name": "builder",
+      "from": "alpine:latest",
+      "steps": [
+	{"type": "WORKDIR", "path": "/src"},
+        {"type": "RUN", "command": "apk update"},
+        {"type": "RUN", "command": "apk upgrade"},
+        {"type": "RUN", "command": "apk add mkdocs"},
+        {"type": "COPY", "src": "mkdocs.yml", "dst": "/src"},
+        {"type": "COPY", "src": "./docs", "dst": "/src/docs"},
+        {"type": "RUN", "command": "mkdocs build"}
+      ]
+    },
+    {
+      "name": "server",
+      "from": "alpine:latest",
+      "steps": [
+        {"type": "RUN", "command": "apk update"},
+        {"type": "RUN", "command": "apk upgrade"},
+        {"type": "RUN", "command": "apk add darkhttpd"},
+        {"type": "COPY", "from": "builder", "src": "/src/site", "dst": "/www"},
+      ],
+    },
+  ],
+  "cmd": ["darkhttpd", "/www"],
+  "excludes" : ["*", "!docs", "!mkdocs.yml"],
 }
 
 // Local Variables:
