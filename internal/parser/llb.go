@@ -22,11 +22,18 @@ func (c *CopyStep) Evaluate(b *BuildContext) error {
 	if c.From != "" {
 		st = b.stages[c.From]
 	}
+	if c.Source == "" || c.Destination == "" {
+		return fmt.Errorf("src or dst empty in copy operation")
+	}
 	b.state = b.state.File(llb.Copy(st, c.Source, c.Destination))
 	return nil
 }
 
 func (c *RunStep) Evaluate(b *BuildContext) error {
+	if c.Command == "" {
+		return fmt.Errorf("empty command")
+	}
+
 	b.state = b.state.Run(shf(c.Command)).Root()
 	return nil
 }
