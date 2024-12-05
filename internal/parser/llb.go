@@ -14,26 +14,32 @@ type BuildContext struct {
 }
 
 type BuildStep interface {
-	ExecStep(*BuildContext) llb.State
+	ExecStep(*BuildContext) (llb.State, error)
 }
 
-func (c *CopyStep) ExecStep(b *BuildContext) llb.State {
+func (c *CopyStep) ExecStep(b *BuildContext) (llb.State, error) {
 	st := b.context
 	if c.From != "" {
 		st = b.stages[c.From]
 	}
+	if c.Source == "" {
+		return llb.State{}, fmt.Errorf("source path cannot be empty")
+	}
+	if c.Destination == "" {
+		return llb.State{}, fmt.Errorf("destination path cannot be empty")
+	}
 	b.state = b.state.File(llb.Copy(st, c.Source, c.Destination))
-	return b.state
+	return b.state, nil
 }
 
-func (c *RunStep) ExecStep(b *BuildContext) llb.State {
+func (c *RunStep) ExecStep(b *BuildContext) (llb.State, error) {
 	b.state = b.state.Run(shf(c.Command)).Root()
-	return b.state
+	return b.state, nil
 }
 
-func (c *WorkdirStep) ExecStep(b *BuildContext) llb.State {
+func (c *WorkdirStep) ExecStep(b *BuildContext) (llb.State, error) {
 	b.state = b.state.Dir(c.Path)
-	return b.state
+	return b.state, nil
 }
 
 func shf(cmd string, v ...interface{}) llb.RunOption {
@@ -49,7 +55,11 @@ func (stage *BuildStage) ToLLB(b *BuildContext) llb.State {
 
 	for i := range *stage.Steps {
 		log.Printf("building stage %#v\n", (*stage.Steps)[i])
-		b.state = (*stage.Steps)[i].ExecStep(b)
+		var err error
+		b.state, err = (*stage.Steps)[i].ExecStep(b)
+		if err != nil {
+			log.Println("Failing to execute step", err)
+		}
 	}
 
 	return b.state
