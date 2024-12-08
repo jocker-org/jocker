@@ -2,6 +2,8 @@ package parser
 
 import (
 	"encoding/json"
+
+	specs "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 type CopyStep struct {
@@ -26,7 +28,7 @@ type BuildStage struct {
 
 type Jockerfile struct {
 	Stages   []BuildStage `json:"stages"`
-	Cmd      []string     `json:"cmd"`
+	Image    specs.ImageConfig `json:"image"`
 	Excludes []string     `json:"excludes,omitempty"`
 }
 
