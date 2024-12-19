@@ -113,11 +113,7 @@ func Build(ctx context.Context, c client.Client) (*client.Result, error) {
 			j.Excludes, _ = dockerignore.Parse(bytes.NewReader(content))
 		}
 	}
-
-	state, err := j.ToLLB()
-	if err != nil {
-		return nil, err
-	}
+	state := j.ToLLB()
 
 	dt, err := state.Marshal(ctx, llb.LinuxAmd64)
 	if err != nil {
@@ -140,9 +136,7 @@ func Build(ctx context.Context, c client.Client) (*client.Result, error) {
 	p := platforms.DefaultSpec()
 	img := &specs.Image{
 		Platform: p,
-		Config: specs.ImageConfig{
-			Cmd: j.Cmd,
-		},
+		Config: j.Image,
 	}
 
 	config, err := json.Marshal(img)
