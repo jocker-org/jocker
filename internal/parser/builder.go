@@ -105,10 +105,7 @@ func Build(ctx context.Context, c client.Client) (*client.Result, error) {
 		return nil, err
 	}
 
-	state, err := j.ToLLB()
-	if err != nil {
-		return nil, err
-	}
+	state := j.ToLLB()
 
 	dt, err := state.Marshal(ctx, llb.LinuxAmd64)
 	if err != nil {

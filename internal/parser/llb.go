@@ -14,40 +14,40 @@ type BuildContext struct {
 }
 
 type BuildStep interface {
-	Evaluate(*BuildContext) error
+	Evaluate(*BuildContext) llb.State
 }
 
-func (c *CopyStep) Evaluate(b *BuildContext) error {
+func (c *CopyStep) Evaluate(b *BuildContext) llb.State {
 	st := b.context
 	if c.From != "" {
 		st = b.stages[c.From]
 	}
 	if c.Source == "" || c.Destination == "" {
-		return fmt.Errorf("src or dst empty in copy operation")
+		return b.state
 	}
 	b.state = b.state.File(llb.Copy(st, c.Source, c.Destination))
-	return nil
+	return b.state
 }
 
-func (c *RunStep) Evaluate(b *BuildContext) error {
+func (c *RunStep) Evaluate(b *BuildContext) llb.State {
 	if c.Command == "" {
-		return fmt.Errorf("empty command")
+		return b.state
 	}
 
 	b.state = b.state.Run(shf(c.Command)).Root()
-	return nil
+	return b.state
 }
 
-func (c *WorkdirStep) Evaluate(b *BuildContext) error {
+func (c *WorkdirStep) Evaluate(b *BuildContext) llb.State {
 	b.state = b.state.Dir(c.Path)
-	return nil
+	return b.state
 }
 
 func shf(cmd string, v ...interface{}) llb.RunOption {
 	return llb.Args([]string{"/bin/sh", "-c", fmt.Sprintf(cmd, v...)})
 }
 
-func (stage *BuildStage) ToLLB(b *BuildContext) (llb.State, error) {
+func (stage *BuildStage) ToLLB(b *BuildContext) llb.State {
 	if stage.From == "scratch" {
 		b.state = llb.Scratch()
 	} else {
@@ -56,15 +56,13 @@ func (stage *BuildStage) ToLLB(b *BuildContext) (llb.State, error) {
 
 	for i := range *stage.Steps {
 		log.Printf("building stage %#v\n", (*stage.Steps)[i])
-		if err := (*stage.Steps)[i].Evaluate(b); err != nil {
-			return b.state, err
-		}
+		b.state = (*stage.Steps)[i].Evaluate(b)
 	}
 
-	return b.state, nil
+	return b.state
 }
 
-func (j *Jockerfile) ToLLB() (llb.State, error) {
+func (j *Jockerfile) ToLLB() llb.State {
 	b := BuildContext{
 		stages: make(map[string]llb.State),
 	}
@@ -77,12 +75,10 @@ func (j *Jockerfile) ToLLB() (llb.State, error) {
 
 	for _, stage := range j.Stages {
 		log.Println("building stage", stage.Name)
-		state, err := stage.ToLLB(&b)
-		if err != nil {
-			return state, err
-		}
+
+		state = stage.ToLLB(&b)
 		b.stages[stage.Name] = state
 	}
 
-	return state, nil
+	return state
 }
