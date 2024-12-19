@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/containerd/platforms"
 	"github.com/google/go-jsonnet"
+	"github.com/jocker-org/jocker/dockerignore"
 	"github.com/moby/buildkit/client/llb"
 	"github.com/moby/buildkit/exporter/containerimage/exptypes"
 	"github.com/moby/buildkit/frontend/gateway/client"
@@ -105,6 +107,12 @@ func Build(ctx context.Context, c client.Client) (*client.Result, error) {
 		return nil, err
 	}
 
+	if len(j.Excludes) == 0 {
+		content, err := readFile(ctx, c, ".dockerignore")
+		if err != nil {
+			j.Excludes, _ = dockerignore.Parse(bytes.NewReader(content))
+		}
+	}
 	state := j.ToLLB()
 
 	dt, err := state.Marshal(ctx, llb.LinuxAmd64)
