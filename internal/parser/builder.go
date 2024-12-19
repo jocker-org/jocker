@@ -128,9 +128,7 @@ func Build(ctx context.Context, c client.Client) (*client.Result, error) {
 	p := platforms.DefaultSpec()
 	img := &specs.Image{
 		Platform: p,
-		Config: specs.ImageConfig{
-			Cmd: j.Cmd,
-		},
+		Config: j.Image,
 	}
 
 	config, err := json.Marshal(img)
