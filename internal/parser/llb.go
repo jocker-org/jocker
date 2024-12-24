@@ -54,6 +54,9 @@ func (stage *BuildStage) ToLLB(b *BuildContext) llb.State {
 		b.state = llb.Image(stage.From)
 	}
 
+	b.state = b.state.With(llb.User(stage.User))
+	log.Printf("running with user %s\n", stage.User)
+
 	for i := range *stage.Steps {
 		log.Printf("building stage %#v\n", (*stage.Steps)[i])
 		b.state = (*stage.Steps)[i].Evaluate(b)
