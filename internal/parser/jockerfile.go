@@ -22,6 +22,7 @@ type WorkdirStep struct {
 
 type BuildStage struct {
 	Name  string `json:"name"`
+	User  string `json:"user"`
 	From  string `json:"from"`
 	Steps *BuildSteps
 }
