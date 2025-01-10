@@ -2,7 +2,7 @@
 
 {
   env.BUILDKIT_HOST = "docker-container://buildkit";
-  packages = with pkgs; [ git gopls go buildkit jq mkdocs dive ];
+  packages = with pkgs; [ git gopls go buildkit jq mkdocs dive jsonnet jsonnet-bundler ];
   languages.go.enable = true;
 
   scripts.run-debug.exec = ''
