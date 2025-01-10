@@ -17,7 +17,8 @@
     step:: {
       workdir:: function(dir) {type: "WORKDIR", "path": dir},
       run:: function(cmd) {type: "RUN", "command": cmd},
-      copy:: function(src, dst, from=null) {type:"COPY", from: from, src: src, dst: dst},
+      copy:: function(src, dst) {type:"COPY", src: src, dst: dst},
+      copyFrom:: function(src, dst, from=null) {type:"COPY", from: from, src: src, dst: dst},
     },
   },
   withStage:: function(stage) {
@@ -31,5 +32,11 @@
   },
   withCmd:: function(cmd) {
     cmd: cmd,
+  },
+  withImage:: function(imageMetadata) {
+    local baseImage = {
+      "Env": ["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"],
+    },
+    image: baseImage + imageMetadata
   },
 }
