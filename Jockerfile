@@ -1,12 +1,15 @@
 #syntax=ghcr.io/jocker-org/jocker
+
+local std = import "std.libsonnet";
+
 {
   "stages": [
     {
       "name": "builder",
-      "user": "foo",
       "from": "alpine:latest",
       "steps": [
-	{"type": "WORKDIR", "path": "/src"},
+	std.stage.step.workdir("/src"),
+	// {"type": "WORKDIR", "path": "/src"},
         {"type": "RUN", "command": "apk update"},
         {"type": "RUN", "command": "apk upgrade"},
         {"type": "RUN", "command": "apk add mkdocs"},
@@ -17,7 +20,6 @@
     },
     {
       "name": "server",
-      "user": "foo",
       "from": "alpine:latest",
       "steps": [
         {"type": "RUN", "command": "apk update"},

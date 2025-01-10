@@ -3,6 +3,7 @@ package parser
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"path/filepath"
@@ -95,16 +96,13 @@ func Build(ctx context.Context, c client.Client) (*client.Result, error) {
 		return nil, err
 	}
 
-	vm := jsonnet.MakeVM()
-	vm.Importer(importer)
-	jsonStr, err := vm.EvaluateAnonymousSnippet(filename, content.String())
+	jsonStr, err := EvaluateSnippet(filename, content.String())
 	if err != nil {
 		return nil, err
 	}
 
 	j, err := ParseJockerfile(jsonStr)
-	if err != nil {
-		return nil, err
+	if err != nil {		return nil, err
 	}
 
 	if len(j.Excludes) == 0 {
