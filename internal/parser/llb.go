@@ -5,12 +5,14 @@ import (
 	"log"
 
 	"github.com/moby/buildkit/client/llb"
+	"github.com/moby/buildkit/frontend/gateway/client"
 )
 
 type BuildContext struct {
 	stages  map[string]llb.State
 	state   llb.State
 	context llb.State
+	client client.Client
 }
 
 type BuildStep interface {
@@ -51,7 +53,8 @@ func (stage *BuildStage) ToLLB(b *BuildContext) llb.State {
 	if stage.From == "scratch" {
 		b.state = llb.Scratch()
 	} else {
-		b.state = llb.Image(stage.From)
+		// b.state = llb.Image(stage.From)
+		b.state = llb.Image(stage.From, llb.WithMetaResolver(b.client))
 	}
 
 	b.state = b.state.With(llb.User(stage.User))
@@ -65,9 +68,10 @@ func (stage *BuildStage) ToLLB(b *BuildContext) llb.State {
 	return b.state
 }
 
-func (j *Jockerfile) ToLLB() llb.State {
+func (j *Jockerfile) ToLLB(c client.Client) llb.State {
 	b := BuildContext{
 		stages: make(map[string]llb.State),
+		client: c,
 	}
 	var state llb.State
 	opts := []llb.LocalOption{
