@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"time"
 
 	"github.com/containerd/platforms"
 	"github.com/google/go-jsonnet"
@@ -111,7 +112,7 @@ func Build(ctx context.Context, c client.Client) (*client.Result, error) {
 			j.Excludes, _ = dockerignore.Parse(bytes.NewReader(content))
 		}
 	}
-	state := j.ToLLB()
+	state := j.ToLLB(c)
 
 	dt, err := state.Marshal(ctx, llb.LinuxAmd64)
 	if err != nil {
@@ -132,9 +133,12 @@ func Build(ctx context.Context, c client.Client) (*client.Result, error) {
 	}
 
 	p := platforms.DefaultSpec()
+	t := time.Now()
+
 	img := &specs.Image{
 		Platform: p,
 		Config: j.Image,
+		Created: &t,
 	}
 
 	config, err := json.Marshal(img)
