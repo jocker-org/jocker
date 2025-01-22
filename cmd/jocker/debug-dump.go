@@ -5,13 +5,17 @@ import (
 	"log"
 	"os"
 
+	"github.com/google/go-jsonnet"
 	"github.com/jocker-org/jocker/internal/parser"
 	"github.com/moby/buildkit/client/llb"
 )
 
 func DebugDump() error {
+	vm := jsonnet.MakeVM()
+	vm.Importer(&jsonnet.FileImporter{JPaths: []string{"/lib/"}})
+
 	// Initialize Jsonnet VM and evaluate Jockerfile
-	jsonStr, err := parser.EvaluateJsonnetFile("Jockerfile")
+	jsonStr, err := vm.EvaluateFile("Jockerfile")
 	if err != nil {
 		log.Fatal(err)
 	}
