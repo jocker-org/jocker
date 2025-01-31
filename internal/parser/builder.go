@@ -6,7 +6,6 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"path/filepath"
 
 	"github.com/containerd/platforms"
 	"github.com/google/go-jsonnet"
@@ -46,43 +45,6 @@ func readFile(ctx context.Context, c client.Client, filename string) (content []
 	})
 }
 
-type ContexImporter struct {
-	ctx   context.Context
-	cache map[string]jsonnet.Contents
-	c     client.Client
-}
-
-func NewContextImporter(ctx context.Context, c client.Client) *ContexImporter {
-	return &ContexImporter{
-		ctx:   ctx,
-		cache: make(map[string]jsonnet.Contents),
-		c:     c,
-	}
-}
-
-func (importer *ContexImporter) Import(importedFrom, importedPath string) (contents jsonnet.Contents, foundHere string, err error) {
-	dir, _ := filepath.Split(importedFrom)
-
-	absPath := importedPath
-	if !filepath.IsAbs(importedPath) {
-		absPath = filepath.Join(dir, importedPath)
-	}
-
-	if entry, ok := importer.cache[absPath]; ok {
-		return entry, absPath, nil
-	}
-
-	content, err := readFile(importer.ctx, importer.c, absPath)
-	if err != nil {
-		// TODO: distinguish between file not found and other
-		// failures?
-		return
-	}
-	entry := jsonnet.MakeContentsRaw(content)
-	importer.cache[absPath] = entry
-	return entry, absPath, nil
-}
-
 func Build(ctx context.Context, c client.Client) (*client.Result, error) {
 	opts := c.BuildOpts().Opts
 	filename := opts["filename"]
@@ -90,19 +52,16 @@ func Build(ctx context.Context, c client.Client) (*client.Result, error) {
 		filename = "Jockerfile"
 	}
 
-	importer := NewContextImporter(ctx, c)
-	content, _, err := importer.Import("", filename)
-	if err != nil {
-		return nil, err
-	}
-
-	jsonStr, err := EvaluateSnippet(filename, content.String())
+	vm := jsonnet.MakeVM()
+	vm.Importer(NewChainedImporter(NewContextImporter(ctx, c), []string{"/lib/"}))
+	jsonStr, err := vm.EvaluateFile(filename)
 	if err != nil {
 		return nil, err
 	}
 
 	j, err := ParseJockerfile(jsonStr)
-	if err != nil {		return nil, err
+	if err != nil {
+		return nil, err
 	}
 
 	if len(j.Excludes) == 0 {
@@ -134,7 +93,7 @@ func Build(ctx context.Context, c client.Client) (*client.Result, error) {
 	p := platforms.DefaultSpec()
 	img := &specs.Image{
 		Platform: p,
-		Config: j.Image,
+		Config:   j.Image,
 	}
 
 	config, err := json.Marshal(img)

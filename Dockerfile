@@ -7,4 +7,6 @@ RUN CGO_ENABLED=0 go build -tags "$BUILDTAGS" --ldflags '-extldflags "-static"' 
 
 FROM scratch
 COPY --from=builder /app/jocker /bin/jocker
+COPY ./lib/ /lib/
 ENTRYPOINT ["/bin/jocker", "build"]
+
