@@ -20,9 +20,13 @@ type WorkdirStep struct {
 	Path string `json:"path"`
 }
 
+type UserStep struct {
+	User string `json:"user"`
+}
+
 type BuildStage struct {
 	Name  string `json:"name"`
-	User  string `json:"user"`
+	// User  string `json:"user"`
 	From  string `json:"from"`
 	Steps *BuildSteps
 }
@@ -61,7 +65,9 @@ func (steps *BuildSteps) UnmarshalJSON(data []byte) error {
 			actual = &RunStep{}
 		case "WORKDIR":
 			actual = &WorkdirStep{}
-		}
+		case "USER":
+			actual = &UserStep{}
+		};
 		err = json.Unmarshal(r, actual)
 		if err != nil {
 			return err

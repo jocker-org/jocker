@@ -9,7 +9,7 @@ local std = import "std.libsonnet";
       "from": "alpine:latest",
       "steps": [
 	std.stage.step.workdir("/src"),
-	// {"type": "WORKDIR", "path": "/src"},
+	{"type": "WORKDIR", "path": "/src"},
         {"type": "RUN", "command": "apk update"},
         {"type": "RUN", "command": "apk upgrade"},
         {"type": "RUN", "command": "apk add mkdocs"},
@@ -22,10 +22,12 @@ local std = import "std.libsonnet";
       "name": "server",
       "from": "alpine:latest",
       "steps": [
+	{"type": "RUN", "command": "addgroup -g 1000 app && adduser -G app -u 1000 app -D"},
         {"type": "RUN", "command": "apk update"},
         {"type": "RUN", "command": "apk upgrade"},
         {"type": "RUN", "command": "apk add darkhttpd"},
         {"type": "COPY", "from": "builder", "src": "/src/site", "dst": "/www"},
+	{"type": "USER", "user": "1000"},
       ],
     },
   ],
