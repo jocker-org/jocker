@@ -17,6 +17,7 @@
     step:: {
       workdir:: function(dir) {type: "WORKDIR", "path": dir},
       run:: function(cmd) {type: "RUN", "command": cmd},
+      user:: function(user) {type: "USER", "user": user},
       copy:: function(src, dst) {type:"COPY", src: src, dst: dst},
       copyFrom:: function(src, dst, from=null) {type:"COPY", from: from, src: src, dst: dst},
     },
