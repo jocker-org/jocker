@@ -25,7 +25,17 @@ func (c *CopyStep) Evaluate(b *BuildContext) llb.State {
 	if c.Source == "" || c.Destination == "" {
 		return b.state
 	}
-	b.state = b.state.File(llb.Copy(st, c.Source, c.Destination))
+	// by default mimick the Dockerfile behaviour, copying the
+	// content only, and not the directory itself
+	copyInfo := llb.CopyInfo{
+		CopyDirContentsOnly: true,
+	}
+
+	opts := []llb.CopyOption{
+		&copyInfo,
+	}
+
+	b.state = b.state.File(llb.Copy(st, c.Source, c.Destination, opts...))
 	return b.state
 }
 
@@ -43,6 +53,11 @@ func (c *WorkdirStep) Evaluate(b *BuildContext) llb.State {
 	return b.state
 }
 
+func (c *UserStep) Evaluate(b *BuildContext) llb.State {
+	b.state = b.state.With(llb.User(c.User))
+	return b.state
+}
+
 func shf(cmd string, v ...interface{}) llb.RunOption {
 	return llb.Args([]string{"/bin/sh", "-c", fmt.Sprintf(cmd, v...)})
 }
@@ -53,9 +68,6 @@ func (stage *BuildStage) ToLLB(b *BuildContext) llb.State {
 	} else {
 		b.state = llb.Image(stage.From)
 	}
-
-	b.state = b.state.With(llb.User(stage.User))
-	log.Printf("running with user %s\n", stage.User)
 
 	for i := range *stage.Steps {
 		log.Printf("building stage %#v\n", (*stage.Steps)[i])
