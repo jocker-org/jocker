@@ -17,6 +17,11 @@ type BuildStep interface {
 	Evaluate(*BuildContext) llb.State
 }
 
+func (c *EnvStep) Evaluate(b *BuildContext) llb.State {
+	b.state = b.state.AddEnv(c.Name, c.Value)
+	return b.state
+}
+
 func (c *CopyStep) Evaluate(b *BuildContext) llb.State {
 	st := b.context
 	if c.From != "" {
