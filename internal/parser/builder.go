@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/containerd/platforms"
 	"github.com/google/go-jsonnet"
@@ -52,7 +53,20 @@ func Build(ctx context.Context, c client.Client) (*client.Result, error) {
 		filename = "Jockerfile"
 	}
 
+	buildargs := make(map[string]string)
+	for k, v := range opts {
+		if strings.HasPrefix(k, "build-arg:") {
+			buildargs[k[10:]] = v
+		}
+	}
+
+	jbuildargs, err := json.Marshal(buildargs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal buildargs: %w", err)
+	}
+
 	vm := jsonnet.MakeVM()
+	vm.ExtCode("buildArgs", string(jbuildargs))
 	vm.Importer(NewChainedImporter(NewContextImporter(ctx, c), []string{"/lib/"}))
 	jsonStr, err := vm.EvaluateFile(filename)
 	if err != nil {
