@@ -91,6 +91,12 @@ func Build(ctx context.Context, c client.Client) (*client.Result, error) {
 	}
 
 	p := platforms.DefaultSpec()
+	if userplatform, ok := opts["platform"]; ok {
+		if p, err = platforms.Parse(userplatform); err != nil {
+			return nil, fmt.Errorf("failed to parse platform %s: %w",
+				userplatform, err)
+		}
+	}
 	img := &specs.Image{
 		Platform: p,
 		Config:   j.Image,
