@@ -6,6 +6,11 @@ import (
 	specs "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
+type ArgStep struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
 type CopyStep struct {
 	From        string `json:"from,omitempty"`
 	Source      string `json:"src"`
@@ -31,9 +36,9 @@ type BuildStage struct {
 }
 
 type Jockerfile struct {
-	Stages   []BuildStage `json:"stages"`
+	Stages   []BuildStage      `json:"stages"`
 	Image    specs.ImageConfig `json:"image"`
-	Excludes []string     `json:"excludes,omitempty"`
+	Excludes []string          `json:"excludes,omitempty"`
 }
 
 type BuildSteps []BuildStep
@@ -58,6 +63,8 @@ func (steps *BuildSteps) UnmarshalJSON(data []byte) error {
 
 		var actual BuildStep
 		switch stepType {
+		case "ARG":
+			actual = &ArgStep{}
 		case "COPY":
 			actual = &CopyStep{}
 		case "RUN":
@@ -66,7 +73,7 @@ func (steps *BuildSteps) UnmarshalJSON(data []byte) error {
 			actual = &WorkdirStep{}
 		case "USER":
 			actual = &UserStep{}
-		};
+		}
 		err = json.Unmarshal(r, actual)
 		if err != nil {
 			return err
