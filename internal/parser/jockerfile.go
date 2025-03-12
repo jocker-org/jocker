@@ -6,7 +6,7 @@ import (
 	specs "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
-type EnvStep struct {
+type ArgStep struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
 }
@@ -63,8 +63,8 @@ func (steps *BuildSteps) UnmarshalJSON(data []byte) error {
 
 		var actual BuildStep
 		switch stepType {
-		case "ENV":
-			actual = &EnvStep{}
+		case "ARG":
+			actual = &ArgStep{}
 		case "COPY":
 			actual = &CopyStep{}
 		case "RUN":
