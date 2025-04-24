@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	// "log"
 	"strings"
 
 	"github.com/containerd/platforms"
@@ -14,7 +15,8 @@ import (
 	"github.com/moby/buildkit/client/llb"
 	"github.com/moby/buildkit/exporter/containerimage/exptypes"
 	"github.com/moby/buildkit/frontend/gateway/client"
-	specs "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/pkg/errors"
+	// specs "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 func readFile(ctx context.Context, c client.Client, filename string) (content []byte, err error) {
@@ -84,7 +86,8 @@ func Build(ctx context.Context, c client.Client) (*client.Result, error) {
 			j.Excludes, _ = dockerignore.Parse(bytes.NewReader(content))
 		}
 	}
-	state := j.ToLLB()
+
+	state := j.ToLLB(buildargs["debug"], ctx)
 
 	dt, err := state.Marshal(ctx, llb.LinuxAmd64)
 	if err != nil {
@@ -111,17 +114,23 @@ func Build(ctx context.Context, c client.Client) (*client.Result, error) {
 				userplatform, err)
 		}
 	}
-	img := &specs.Image{
-		Platform: p,
-		Config:   j.Image,
-	}
 
-	config, err := json.Marshal(img)
+	j.Image.Platform = p
+	j.Image.Author = "test"
+	// j.Image.Config =
+	// img := &specs.Image{
+	// 	Platform: p,
+	// 	Config:   j.Image,
+	// }
+
+	config, err := json.Marshal(j.Image)
+
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal image config: %w", err)
+		return nil, errors.Wrapf(err, "failed to marshal image config")
 	}
-	res.AddMeta(exptypes.ExporterImageConfigKey, config)
 	res.SetRef(ref)
+	res.AddMeta(exptypes.ExporterImageConfigKey, config)
+	res.AddMeta(exptypes.ExporterImageBaseConfigKey, config)
 
 	return res, nil
 }
