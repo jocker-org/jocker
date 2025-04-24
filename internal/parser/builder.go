@@ -14,14 +14,20 @@ import (
 	"github.com/moby/buildkit/client/llb"
 	"github.com/moby/buildkit/exporter/containerimage/exptypes"
 	"github.com/moby/buildkit/frontend/gateway/client"
-	specs "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/pkg/errors"
 )
 
 func readFile(ctx context.Context, c client.Client, filename string) (content []byte, err error) {
 	src := llb.Local("context",
-		llb.IncludePatterns([]string{filename}),
+		llb.IncludePatterns([]string{
+			filename,
+			"**/" + filename,
+			"*/",
+		}),
 		llb.SessionID(c.BuildOpts().SessionID),
 		llb.SharedKeyHint("Jockerfile"),
+		llb.WithCustomName("load " + filename),
+
 	)
 
 	def, err := src.Marshal(ctx)
@@ -60,6 +66,11 @@ func Build(ctx context.Context, c client.Client) (*client.Result, error) {
 		}
 	}
 
+	jopts, err := json.Marshal(opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal opts: %w", err)
+	}
+
 	jbuildargs, err := json.Marshal(buildargs)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal buildargs: %w", err)
@@ -67,8 +78,17 @@ func Build(ctx context.Context, c client.Client) (*client.Result, error) {
 
 	vm := jsonnet.MakeVM()
 	vm.ExtCode("buildArgs", string(jbuildargs))
+	vm.ExtCode("filename", fmt.Sprintf("%q",filename))
+	vm.ExtCode("opts", fmt.Sprintf("%q",jopts))
 	vm.Importer(NewChainedImporter(NewContextImporter(ctx, c), []string{"/lib/"}))
-	jsonStr, err := vm.EvaluateFile(filename)
+
+	dtJockerfile, err := readFile(ctx, c, filename)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to read Jockerfile")
+	}
+
+	// jsonStr, err := vm.EvaluateFile(filename)
+	jsonStr, err := vm.EvaluateAnonymousSnippet(filename, string(dtJockerfile))
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +104,8 @@ func Build(ctx context.Context, c client.Client) (*client.Result, error) {
 			j.Excludes, _ = dockerignore.Parse(bytes.NewReader(content))
 		}
 	}
-	state := j.ToLLB()
+
+	state := j.ToLLB(buildargs["debug"], ctx, c)
 
 	dt, err := state.Marshal(ctx, llb.LinuxAmd64)
 	if err != nil {
@@ -96,7 +117,7 @@ func Build(ctx context.Context, c client.Client) (*client.Result, error) {
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to resolve dockerfile: %w", err)
+		return nil, fmt.Errorf("failed to resolve jockerfile: %w", err)
 	}
 
 	ref, err := res.SingleRef()
@@ -111,17 +132,15 @@ func Build(ctx context.Context, c client.Client) (*client.Result, error) {
 				userplatform, err)
 		}
 	}
-	img := &specs.Image{
-		Platform: p,
-		Config:   j.Image,
-	}
 
-	config, err := json.Marshal(img)
+	j.Image.Platform = p
+
+	config, err := json.Marshal(j.Image)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal image config: %w", err)
+		return nil, errors.Wrapf(err, "failed to marshal image config")
 	}
-	res.AddMeta(exptypes.ExporterImageConfigKey, config)
 	res.SetRef(ref)
+	res.AddMeta(exptypes.ExporterImageConfigKey, config)
 
 	return res, nil
 }
