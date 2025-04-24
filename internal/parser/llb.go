@@ -68,7 +68,7 @@ func debugLog(b *BuildContext, msg string) {
 	uuid := fmt.Sprintf("%x ", by)
 	if b.debug == "all" {
 		slog.Warn("Step: ", "buildctx", msg)
-		b.state = b.state.Run(shf("echo DEBUG " + uuid + msg)).Root()
+		b.state = b.state.Run(llb.Shlex("echo DEBUG " + uuid + msg)).Root()
 	}
 }
 
@@ -203,6 +203,7 @@ func (j *Jockerfile) ToLLB(debug string, ctx context.Context, c client.Client) l
 	// after all stages align the imageConfig to export
 	slog.Info("setting image config")
 	slog.Info(b.image.Config.WorkingDir)
+
 	j.Image = b.image
 
 	return state
