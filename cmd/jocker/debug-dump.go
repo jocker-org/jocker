@@ -23,9 +23,9 @@ func DebugDump() error {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	state := j.ToLLB("all", context.TODO())
 	ctx := context.TODO()
+	state := j.ToLLB("all", ctx, nil)
+
 	dt, err := state.Marshal(ctx, llb.LinuxAmd64)
 	if err != nil {
 		log.Fatal(err)
