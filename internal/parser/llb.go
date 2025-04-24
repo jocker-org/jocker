@@ -1,20 +1,49 @@
 package parser
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
+	"strings"
 
 	"github.com/moby/buildkit/client/llb"
+	"github.com/moby/buildkit/client/llb/imagemetaresolver"
+	"github.com/moby/buildkit/client/llb/sourceresolver"
+	// specs "github.com/opencontainers/image-spec/specs-go/v1"
+	dockerspec "github.com/moby/docker-image-spec/specs-go/v1"
 )
 
 type BuildContext struct {
 	stages  map[string]llb.State
 	state   llb.State
 	context llb.State
+	debug   string
+	ctx     context.Context
+	// image   specs.ImageConfig
+	image dockerspec.DockerOCIImage
 }
 
 type BuildStep interface {
 	Evaluate(*BuildContext) llb.State
+}
+
+func parseKeyValue(env string) (string, string) {
+	parts := strings.SplitN(env, "=", 2)
+	v := ""
+	if len(parts) > 1 {
+		v = parts[1]
+	}
+
+	return parts[0], v
+}
+
+// debugLog conditionally logs a debug message and injects an echo command into the LLB state.
+func debugLog(b *BuildContext, msg string) {
+	if b.debug == "all" {
+		slog.Warn("Step: ", "buildctx", msg)
+		b.state = b.state.Run(shf("echo DEBUG " + msg)).Root()
+	}
 }
 
 func (c *ArgStep) Evaluate(b *BuildContext) llb.State {
@@ -49,11 +78,14 @@ func (c *RunStep) Evaluate(b *BuildContext) llb.State {
 		return b.state
 	}
 
+	debugLog(b, c.Command)
+
 	b.state = b.state.Run(shf(c.Command)).Root()
 	return b.state
 }
 
 func (c *WorkdirStep) Evaluate(b *BuildContext) llb.State {
+	debugLog(b, c.Path)
 	b.state = b.state.Dir(c.Path)
 	return b.state
 }
@@ -71,20 +103,59 @@ func (stage *BuildStage) ToLLB(b *BuildContext) llb.State {
 	if stage.From == "scratch" {
 		b.state = llb.Scratch()
 	} else {
+		metaresolver := imagemetaresolver.Default()
+		_, _, dt, err := metaresolver.ResolveImageConfig(b.ctx, "docker.io/library/" + stage.From, sourceresolver.Opt{
+			ImageOpt: &sourceresolver.ResolveImageOpt{
+				ResolveMode: llb.ResolveModeDefault.String(),
+			},
+		})
+
+		if err != nil {
+			debugLog(b, "failed to resolve image")
+			slog.Error("failed to resolve image", "FROM", err)
+		}
+
+		// var img specs.ImageConfig
+		var img dockerspec.DockerOCIImage
+		if err := json.Unmarshal(dt, &img); err != nil {
+			debugLog(b, "failed to unmarshal image")
+			slog.Error("failed to unmarshal image", "FROM", err)
+		}
+
+		debugLog(b, string(dt))
+
 		b.state = llb.Image(stage.From)
+
+		b.image = img
+
+		debugLog(b, b.image.Config.WorkingDir)
+		debugLog(b, img.Config.WorkingDir)
+		// This checks that the envs are set
+		for _, env := range img.Config.Env {
+			debugLog(b, env)
+			k, v := parseKeyValue(env)
+			b.state = b.state.AddEnv(k, v)
+		}
+
+		// b.state, err = llb.Image(stage.From).WithImageConfig(dt)
+		if err != nil {
+			slog.Error("failed to insert config in image", "FROM", err)
+		}
 	}
 
 	for i := range *stage.Steps {
-		log.Printf("building stage %#v\n", (*stage.Steps)[i])
+		slog.Info("Building steps", "stage", (*stage.Steps)[i])
 		b.state = (*stage.Steps)[i].Evaluate(b)
 	}
 
 	return b.state
 }
 
-func (j *Jockerfile) ToLLB() llb.State {
+func (j *Jockerfile) ToLLB(debug string, ctx context.Context) llb.State {
 	b := BuildContext{
 		stages: make(map[string]llb.State),
+		debug:  debug,
+		ctx: ctx,
 	}
 	var state llb.State
 	opts := []llb.LocalOption{
@@ -94,11 +165,17 @@ func (j *Jockerfile) ToLLB() llb.State {
 	b.context = llb.Local("context", opts...)
 
 	for _, stage := range j.Stages {
-		log.Println("building stage", stage.Name)
-
+		slog.Info("Building stage", "ctx", stage.Name)
 		state = stage.ToLLB(&b)
 		b.stages[stage.Name] = state
 	}
+
+	// after all stages align the imageConfig to export
+	slog.Info("setting image config")
+	slog.Info(b.image.Config.WorkingDir)
+	j.Image = b.image
+
+	slog.Info(j.Image.Config.WorkingDir)
 
 	return state
 }
