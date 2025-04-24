@@ -2,8 +2,8 @@ package parser
 
 import (
 	"encoding/json"
-
-	specs "github.com/opencontainers/image-spec/specs-go/v1"
+	dockerspec "github.com/moby/docker-image-spec/specs-go/v1"
+	// specs "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 type ArgStep struct {
@@ -37,7 +37,8 @@ type BuildStage struct {
 
 type Jockerfile struct {
 	Stages   []BuildStage      `json:"stages"`
-	Image    specs.ImageConfig `json:"image"`
+	Image    dockerspec.DockerOCIImage
+	// Image    specs.ImageConfig `json:"image"`
 	Excludes []string          `json:"excludes,omitempty"`
 }
 
