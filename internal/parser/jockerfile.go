@@ -37,8 +37,7 @@ type BuildStage struct {
 
 type Jockerfile struct {
 	Stages   []BuildStage      `json:"stages"`
-	Image    dockerspec.DockerOCIImage
-	// Image    specs.ImageConfig `json:"image"`
+	Image    dockerspec.DockerOCIImage `json:image`
 	Excludes []string          `json:"excludes,omitempty"`
 }
 
