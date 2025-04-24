@@ -19,9 +19,15 @@ import (
 
 func readFile(ctx context.Context, c client.Client, filename string) (content []byte, err error) {
 	src := llb.Local("context",
-		llb.IncludePatterns([]string{filename}),
+		llb.IncludePatterns([]string{
+			filename,
+			"**/" + filename,
+			"*/",
+		}),
 		llb.SessionID(c.BuildOpts().SessionID),
 		llb.SharedKeyHint("Jockerfile"),
+		llb.WithCustomName("load " + filename),
+
 	)
 
 	def, err := src.Marshal(ctx)
@@ -60,6 +66,11 @@ func Build(ctx context.Context, c client.Client) (*client.Result, error) {
 		}
 	}
 
+	jopts, err := json.Marshal(opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal opts: %w", err)
+	}
+
 	jbuildargs, err := json.Marshal(buildargs)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal buildargs: %w", err)
@@ -67,8 +78,17 @@ func Build(ctx context.Context, c client.Client) (*client.Result, error) {
 
 	vm := jsonnet.MakeVM()
 	vm.ExtCode("buildArgs", string(jbuildargs))
+	vm.ExtCode("filename", fmt.Sprintf("%q",filename))
+	vm.ExtCode("opts", fmt.Sprintf("%q",jopts))
 	vm.Importer(NewChainedImporter(NewContextImporter(ctx, c), []string{"/lib/"}))
-	jsonStr, err := vm.EvaluateFile(filename)
+
+	dtJockerfile, err := readFile(ctx, c, filename)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to read Jockerfile")
+	}
+
+	// jsonStr, err := vm.EvaluateFile(filename)
+	jsonStr, err := vm.EvaluateAnonymousSnippet(filename, string(dtJockerfile))
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +105,6 @@ func Build(ctx context.Context, c client.Client) (*client.Result, error) {
 		}
 	}
 
-
 	state := j.ToLLB(buildargs["debug"], ctx, c)
 
 	dt, err := state.Marshal(ctx, llb.LinuxAmd64)
@@ -98,7 +117,7 @@ func Build(ctx context.Context, c client.Client) (*client.Result, error) {
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to resolve dockerfile: %w", err)
+		return nil, fmt.Errorf("failed to resolve jockerfile: %w", err)
 	}
 
 	ref, err := res.SingleRef()
